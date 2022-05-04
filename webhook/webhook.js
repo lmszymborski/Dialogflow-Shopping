@@ -370,6 +370,26 @@ app.post("/", express.json(), (req, res) => {
     }
   }
 
+  async function itemNavigation() {
+    if (token == '') {
+      agent.add("You must log in first!")
+    } else {
+      let name = agent.parameters.item;
+      console.log(name)
+      let matched = {};
+      await fetchProducts();
+      for (const product of products) {
+        if (product.name == name) {
+          matched = product;
+          break;
+        }
+      }
+      let page = matched.category + '/products/' + matched.id;
+      await changePage(page);
+      agent.add("Changed to product page " + matched.name);
+    }
+  }
+
   let intentMap = new Map();
   intentMap.set("Default Welcome Intent", welcome);
   // You will need to declare this `Login` intent in DialogFlow to make this work
@@ -382,6 +402,7 @@ app.post("/", express.json(), (req, res) => {
   intentMap.set("Review Cart", reviewCart)
   intentMap.set("Confirm", confirm);
   intentMap.set("Navigation", navigation);
+  intentMap.set("Item Navigation", itemNavigation);
   agent.handleRequest(intentMap);
 });
 
