@@ -215,7 +215,9 @@ class App extends React.Component {
     };
 
     let response = await fetch(window.$ENDPOINT_URL + '/categories/', requestOptions);
+    console.log(response)
     let result = await response.json();
+    console.log(result)
 
     this.setState({categories: result.categories})
   }
@@ -233,6 +235,7 @@ class App extends React.Component {
 
     let response = await fetch(window.$ENDPOINT_URL + '/products/', requestOptions);
     let result = await response.json();
+    console.log(result.products)
 
     this.setState({products: result.products})
   }

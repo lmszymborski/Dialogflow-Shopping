@@ -41,6 +41,7 @@ class Product extends React.Component {
       requestOptions
     );
     let result = await response.json();
+    console.log(result)
 
     this.setState({ reviewsList: result.reviews });
   }
