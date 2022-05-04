@@ -166,14 +166,14 @@ async function changePage(newPage) {
       "x-access-token": token,
     },
     body: JSON.stringify({
-      page: newPage
+      page: '/' + username + '/' + newPage
     }),
     redirect: 'follow'
   };
 
   let response = await fetch(ENDPOINT_URL + '/application', requestOptions);
   console.log(response)
-  currPage = newPage
+  currPage = '/' + username + '/' + newPage
   await getApplicationUrl();
 }
 
@@ -326,7 +326,7 @@ app.post("/", express.json(), (req, res) => {
     if (token == '') {
       agent.add("You must log in first!")
     } else {    
-      changePage('/' + username + "/" + 'cart-review');
+      changePage('cart-review');
       await fetchCartItems()
       let num = 0;
       let list = '';
@@ -347,8 +347,26 @@ app.post("/", express.json(), (req, res) => {
       agent.add('Review your purchase before confirming.')
       await reviewCart();
     } else {
-      changePage('/' + username + '/' + 'cart-confirmed')
+      changePage('cart-confirmed')
       agent.add("Purchase confirmed!")
+    }
+  }
+
+  async function navigation() {
+    if (token == '') {
+      agent.add("You must log in first!")
+    } else {
+      let page = agent.parameters.page.toLowerCase();
+      if (page == 'home page') {
+        page = ''
+      }
+      await changePage(page);
+      if (page == '') {
+        agent.add("Changed to home page")
+      }
+      else {
+        agent.add("Changed to page " + page)
+      }
     }
   }
 
@@ -363,6 +381,7 @@ app.post("/", express.json(), (req, res) => {
   intentMap.set("Clear", clear)
   intentMap.set("Review Cart", reviewCart)
   intentMap.set("Confirm", confirm);
+  intentMap.set("Navigation", navigation);
   agent.handleRequest(intentMap);
 });
 
