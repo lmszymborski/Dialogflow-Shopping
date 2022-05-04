@@ -158,6 +158,29 @@ async function clearCart() {
 }
 
 async function changePage(newPage) {
+  while (await getApplicationUrl() != '/' + username + '/' + newPage) {
+    let requestOptions = {
+      method: 'PUT',
+      headers: {
+        "Content-Type": "application/json",
+        "x-access-token": token,
+      },
+      body: JSON.stringify({
+        page: '/' + username + '/' + newPage
+      }),
+      redirect: 'follow'
+    };
+  
+    let response = await fetch(ENDPOINT_URL + '/application', requestOptions);
+    console.log(response)
+    currPage = '/' + username + '/' + newPage
+    console.log(currPage)
+    currCategory = newPage
+    //await getApplicationUrl();
+  }
+}
+
+async function goBack() {
   let requestOptions = {
     method: 'PUT',
     headers: {
@@ -165,16 +188,13 @@ async function changePage(newPage) {
       "x-access-token": token,
     },
     body: JSON.stringify({
-      page: '/' + username + '/' + newPage
+      back: true
     }),
     redirect: 'follow'
   };
 
   let response = await fetch(ENDPOINT_URL + '/application', requestOptions);
-  console.log(response)
-  currPage = '/' + username + '/' + newPage
-  console.log(currPage)
-  currCategory = newPage
+  console.log(response.page)
   await getApplicationUrl();
 }
 
@@ -190,8 +210,9 @@ async function getApplicationUrl() {
 
   let response = await fetch(ENDPOINT_URL + '/application', requestOptions);
   let result = await response.json();
+  console.log('hi')
   console.log(result.page);
-  return result;
+  return result.page;
 }
 
 app.get("/", (req, res) => res.send("online"));
@@ -210,7 +231,7 @@ app.post("/", express.json(), (req, res) => {
 
     await getToken();
 
-    agent.add(token);
+    agent.add("You've been logged in! Would you like to see bottoms, hats, leggings, plushes, sweatshirts, tees, or review your cart?");
   }
 
   async function categories() {
@@ -245,15 +266,60 @@ app.post("/", express.json(), (req, res) => {
     await fetchProducts()
 
     let name = agent.parameters.name
-    let question = agent.parameters.question
     let matched = {}
 
-    for (const product of products) {
-      if (product.name == name) {
-        matched = product;
-        break;
+    if (name == 'Current') {
+      let url = await getApplicationUrl();
+      url = url;
+      console.log(url)
+      console.log(url.length)
+      let secondSlash = false;
+      let thirdSlash = false;
+      let fourthSlash = false;
+      let fifthSlash = false;
+      let currProduct = ''
+      for (var i = 0; i < url.length; i++) {
+        console.log('hello in')
+        if (url.charAt(i) == '/' && !secondSlash && !thirdSlash) {
+          console.log('first slash found: ' + url.charAt(i))
+          secondSlash = true;
+        }
+        else if (url.charAt(i) == '/' && secondSlash && !thirdSlash) {
+          console.log('second slash found ' + url.charAt(i))
+          thirdSlash = true;
+        }
+        else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fourthSlash) {
+          console.log('third slash found ' + url.charAt(i))
+          fourthSlash = true;
+        }
+        else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fifthSlash) {
+          console.log('fourth slash found ' + url.charAt(i))
+          fifthSlash = true;
+        }
+        else if (fifthSlash) {
+          console.log('adding to currProduct ' + url.charAt(i))
+          currProduct += url.charAt(i)
+        }
+      }
+
+      let id = currProduct;
+
+      for (const product of products) {
+        if (product.id == id) {
+          matched = product;
+          break;
+        }
+      }
+    } else {
+      for (const product of products) {
+        if (product.name == name) {
+          matched = product;
+          break;
+        }
       }
     }
+
+    let question = agent.parameters.question
 
     if (question == 'Price') {
       agent.add(String(matched.price) + ' dollars.')
@@ -270,13 +336,25 @@ app.post("/", express.json(), (req, res) => {
       if (reviewsList.length > 0) {
         for (const review of reviewsList) {
           num += 1
-          list += 'Review ' + num + ': ' + review.stars + '/5. ' + review.title + '. ' + review.text;
+          list += 'Review ' + num + ': ' + review.stars + '/5. ' + review.title + '. ' + review.text + ' ';
         }
         agent.add(list)
       } else {
         agent.add("There are no reviews.")
       }
 
+    }
+
+    if (question == "Rating") {
+      await fetchReviews(matched.id);
+      let overall = 0;
+      if (reviewsList.length > 0) {
+        for (const review of reviewsList) {
+          overall += review.stars;
+        }
+      }
+      overall = overall / reviewsList.length;
+      agent.add("The overall rating is " + overall + "/5");
     }
   }
 
@@ -367,12 +445,17 @@ app.post("/", express.json(), (req, res) => {
       if (page == 'home page') {
         page = ''
       }
-      await changePage(page);
-      if (page == '') {
-        agent.add("Changed to home page")
-      }
-      else {
-        agent.add("Changed to page " + page)
+      if (page == 'back') {
+        await goBack();
+        agent.add("Went back");
+      } else {
+        await changePage(page);
+        if (page == '') {
+          agent.add("Changed to home page")
+        }
+        else {
+          agent.add("Changed to page " + page)
+        }
       }
     }
   }
@@ -395,7 +478,7 @@ app.post("/", express.json(), (req, res) => {
       agent.add("Changed to product page " + matched.name);
     }
   }
-
+  /*
   async function categoryInquiry() {
     if (token == '') {
       agent.add("You must log in first!")
@@ -517,7 +600,7 @@ app.post("/", express.json(), (req, res) => {
     }
 
 
-  }
+  }*/
 
   let intentMap = new Map();
   intentMap.set("Default Welcome Intent", welcome);
@@ -534,7 +617,7 @@ app.post("/", express.json(), (req, res) => {
   intentMap.set("Confirm", confirm);
   intentMap.set("Navigation", navigation);
   intentMap.set("Item Navigation", itemNavigation);
-  intentMap.set("Category Inquiry", categoryInquiry);
+  //intentMap.set("Category Inquiry", categoryInquiry);
   agent.handleRequest(intentMap);
 });
 
