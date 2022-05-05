@@ -158,7 +158,7 @@ async function clearCart() {
 }
 
 async function changePage(newPage) {
-  while (await getApplicationUrl() != '/' + username + '/' + newPage) {
+  //while (await getApplicationUrl() != '/' + username + '/' + newPage) {
     let requestOptions = {
       method: 'PUT',
       headers: {
@@ -177,7 +177,7 @@ async function changePage(newPage) {
     console.log(currPage)
     currCategory = newPage
     //await getApplicationUrl();
-  }
+  //}
 }
 
 async function goBack() {
@@ -263,12 +263,15 @@ app.post("/", express.json(), (req, res) => {
   }
 
   async function productInfo() {
+    if (token == '') {
+      agent.add("You must log in first!")
+    }
     await fetchProducts()
 
     let name = agent.parameters.name
-    let matched = {}
+    let matched = ''
 
-    if (name == 'Current') {
+    if (name == '') {
       let url = await getApplicationUrl();
       url = url;
       console.log(url)
@@ -310,6 +313,11 @@ app.post("/", express.json(), (req, res) => {
           break;
         }
       }
+      console.log(matched);
+      console.log(typeof matched);
+      if (matched == '') {
+        agent.add("What is the product?");
+      }
     } else {
       for (const product of products) {
         if (product.name == name) {
@@ -317,45 +325,49 @@ app.post("/", express.json(), (req, res) => {
           break;
         }
       }
-    }
+    } if (agent.parameters.question == '') {
+      agent.add("Do you want to know the price, description, reviews, or rating?")
+    } if (agent.parameters.name != '' || matched != '') {
+      console.log(matched != '')
+      console.log(matched);
+      let question = agent.parameters.question
 
-    let question = agent.parameters.question
-
-    if (question == 'Price') {
-      agent.add(String(matched.price) + ' dollars.')
-    }
-
-    if (question == 'Description') {
-      agent.add(matched.description)
-    }
-
-    if (question == 'Reviews') {
-      await fetchReviews(matched.id);
-      let list = ''
-      let num = 0
-      if (reviewsList.length > 0) {
-        for (const review of reviewsList) {
-          num += 1
-          list += 'Review ' + num + ': ' + review.stars + '/5. ' + review.title + '. ' + review.text + ' ';
-        }
-        agent.add(list)
-      } else {
-        agent.add("There are no reviews.")
+      if (question == 'Price') {
+        agent.add(String(matched.price) + ' dollars.')
       }
-
-    }
-
-    if (question == "Rating") {
-      await fetchReviews(matched.id);
-      let overall = 0;
-      if (reviewsList.length > 0) {
-        for (const review of reviewsList) {
-          overall += review.stars;
+  
+      if (question == 'Description') {
+        agent.add(matched.description)
+      }
+  
+      if (question == 'Reviews') {
+        await fetchReviews(matched.id);
+        let list = ''
+        let num = 0
+        if (reviewsList.length > 0) {
+          for (const review of reviewsList) {
+            num += 1
+            list += 'Review ' + num + ': ' + review.stars + '/5. ' + review.title + '. ' + review.text + ' ';
+          }
+          agent.add(list)
+        } else {
+          agent.add("There are no reviews.")
         }
       }
-      overall = overall / reviewsList.length;
-      agent.add("The overall rating is " + overall + "/5");
+  
+      if (question == "Rating") {
+        await fetchReviews(matched.id);
+        let overall = 0;
+        if (reviewsList.length > 0) {
+          for (const review of reviewsList) {
+            overall += review.stars;
+          }
+        }
+        overall = overall / reviewsList.length;
+        agent.add("The overall rating is " + overall + "/5");
+      }
     }
+
   }
 
   async function addToCart() {
@@ -377,6 +389,9 @@ app.post("/", express.json(), (req, res) => {
         }
       }
 
+      if (addOrDelete == '') {
+        agent.add("Please specify if you'd like to add or delete");
+      }
       if (matched == {}) {
         agent.add('Product not found')
       }
@@ -440,7 +455,12 @@ app.post("/", express.json(), (req, res) => {
   async function navigation() {
     if (token == '') {
       agent.add("You must log in first!")
-    } else {
+    } 
+    else if (agent.parameters.page == '') {
+      agent.add("What page would you like to go to?")
+
+    } 
+    else {
       let page = agent.parameters.page.toLowerCase();
       if (page == 'home page') {
         page = ''
@@ -465,17 +485,22 @@ app.post("/", express.json(), (req, res) => {
       agent.add("You must log in first!")
     } else {
       let name = agent.parameters.item;
-      let matched = {};
-      await fetchProducts();
-      for (const product of products) {
-        if (product.name == name) {
-          matched = product;
-          break;
+      if (name == '') {
+        agent.add('What item do you want to navigate to?')
+      } else {
+        let matched = {};
+        await fetchProducts();
+        for (const product of products) {
+          if (product.name == name) {
+            matched = product;
+            break;
+          }
         }
+        let page = matched.category + '/products/' + matched.id;
+        await changePage(page);
+        agent.add("Changed to product page " + matched.name);
       }
-      let page = matched.category + '/products/' + matched.id;
-      await changePage(page);
-      agent.add("Changed to product page " + matched.name);
+
     }
   }
   /*
