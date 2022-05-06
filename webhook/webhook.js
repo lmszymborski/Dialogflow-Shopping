@@ -509,11 +509,24 @@ app.post("/", express.json(), (req, res) => {
           updateMessages(false, 'added to cart!')
         }
         if (addOrDelete == 'Delete') {
-          for (let i = 0; i < amount; i++)
+          await fetchCartItems();
+          let numInCart = 0
+          for (const item of cartItems) {
+            if (item.name == matched.name) {
+              numInCart = item.count;
+              break;
+            }
+          }
+          if (numInCart < amount) {
+            agent.add("You do not have " + amount + " of " + matched.name + " in your cart to delete!");
+            updateMessages(false, "You do not have " + amount + " of " + matched.name + " in your cart to delete!")
+          } else {
+            for (let i = 0; i < amount; i++)
             await decrease(matched.id);
-          await fetchCartItems()
-          agent.add('deleted from cart')
-          updateMessages(false, 'deleted from cart')
+            await fetchCartItems()
+            agent.add('deleted from cart')
+            updateMessages(false, 'deleted from cart')
+          }
         }
       }
 
@@ -600,8 +613,12 @@ app.post("/", express.json(), (req, res) => {
           num += 1
           list += item.count + " " + item.name + '. ';
         }
-        agent.add(list + "Would you like to confirm your purchase?")
-        updateMessages(false, list + "Would you like to confirm your purchase?")
+        let plural = "items"
+        if (cartItems.length == 1) {
+          plural = "item"
+        }
+        agent.add("Confirm purchase of " + cartItems.length + " " + plural + ". " + list + "Would you like to confirm your purchase?")
+        updateMessages(false, "Confirm purchase of " + cartItems.length + " " + plural + ". " + list + "Would you like to confirm your purchase?")
       } else {
         agent.add("There are no items in your cart.")
         updateMessages(false, "There are no items in your cart.")
@@ -887,7 +904,6 @@ app.post("/", express.json(), (req, res) => {
   intentMap.set("Review Cart", reviewCart)
   intentMap.set("Review Cart - no", reviewCartNo);
   intentMap.set("Review Cart - yes", confirm);
-  intentMap.set("Confirm", confirm);
   intentMap.set("Navigation", navigation);
   intentMap.set("Item Navigation", itemNavigation);
   intentMap.set("View Cart", viewCart)
