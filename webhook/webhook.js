@@ -192,9 +192,7 @@ async function changePage(newPage) {
     };
   
     let response = await fetch(ENDPOINT_URL + '/application', requestOptions);
-    console.log(response)
     currPage = '/' + username + '/' + newPage
-    console.log(currPage)
     currCategory = newPage
     //await getApplicationUrl();
   //}
@@ -214,7 +212,6 @@ async function goBack() {
   };
 
   let response = await fetch(ENDPOINT_URL + '/application', requestOptions);
-  console.log(response.page)
   await getApplicationUrl();
 }
 
@@ -230,9 +227,7 @@ async function getApplicationUrl() {
 
   let response = await fetch(ENDPOINT_URL + '/application', requestOptions);
   let result = await response.json();
-  console.log('hi')
   let page = result.page;
-  console.log('page:' + page)
   return page;
 }
 
@@ -260,7 +255,6 @@ app.post("/", express.json(), (req, res) => {
     await getToken();
 
     if (token) {
-      console.log(token)
       let message1 = "You've been logged in! Would you like to see bottoms, hats, leggings, plushes, sweatshirts, tees, or review your cart?"
       let message2 = "Where would you like to go? See bottoms, hats, leggings, plushes, sweatshirts, tees, or see your cart?"
       let message3 = "You're home! Where to next? Bottoms, hats, leggings, plushes, sweatshirts, or tees? Or do you want to view your cart?"
@@ -354,34 +348,25 @@ app.post("/", express.json(), (req, res) => {
 
       if (name == '') {
         let url = await getApplicationUrl();
-        console.log(await getApplicationUrl());
-        console.log(url)
-        console.log(url.length)
         let secondSlash = false;
         let thirdSlash = false;
         let fourthSlash = false;
         let fifthSlash = false;
         let currProduct = ''
         for (var i = 0; i < url.length; i++) {
-          console.log('hello in')
           if (url.charAt(i) == '/' && !secondSlash && !thirdSlash) {
-            console.log('first slash found: ' + url.charAt(i))
             secondSlash = true;
           }
           else if (url.charAt(i) == '/' && secondSlash && !thirdSlash) {
-            console.log('second slash found ' + url.charAt(i))
             thirdSlash = true;
           }
           else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fourthSlash) {
-            console.log('third slash found ' + url.charAt(i))
             fourthSlash = true;
           }
           else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fifthSlash) {
-            console.log('fourth slash found ' + url.charAt(i))
             fifthSlash = true;
           }
           else if (fifthSlash) {
-            console.log('adding to currProduct ' + url.charAt(i))
             currProduct += url.charAt(i)
           }
         }
@@ -394,8 +379,7 @@ app.post("/", express.json(), (req, res) => {
             break;
           }
         }
-        console.log(matched);
-        console.log(typeof matched);
+
         if (matched == '' && agent.parameters.question != '') {
           agentResponse(["What is the product?", 
             "And what product do you want that info for?",
@@ -416,14 +400,11 @@ app.post("/", express.json(), (req, res) => {
           "Can you give me a bit more info? What's the name and what do you want to know about it?"]);
       }
       else if (agent.parameters.question == '' && matched != '') {
-        console.log(matched);
         agentResponse(["Do you want to know the price, description, reviews, or rating?",
           "What do you want to know about it? I know price, description, reviews, and rating.",
           "Okay, do you want to know the price, reviews, rating, or description of the " + matched.name,
           "I know the price, reviews, rating, and description for the " + matched.name])
       } else if (agent.parameters.name != '' || matched != '') {
-        console.log(matched != '')
-        console.log(matched);
         let question = agent.parameters.question.toLowerCase()
   
         if (question == 'price') {
@@ -518,40 +499,33 @@ app.post("/", express.json(), (req, res) => {
       }
 
       if (addOrDelete == '') {
-        agent.add("Would you like to add or delete that item?");
-        updateMessages(false, "Would you like to add or delete that item?")
+        agentResponse(["Would you like to add or delete that item?",
+          "Add or remove?",
+          "Okay, should we add it or get rid of it?",
+          "Are we adding it or getting rid of it?"])
       }
 
       if (agent.parameters.name == '') {
         let url = await getApplicationUrl();
-        console.log(await getApplicationUrl());
-        console.log(url)
-        console.log(url.length)
         let secondSlash = false;
         let thirdSlash = false;
         let fourthSlash = false;
         let fifthSlash = false;
         let currProduct = ''
         for (var i = 0; i < url.length; i++) {
-          console.log('hello in')
           if (url.charAt(i) == '/' && !secondSlash && !thirdSlash) {
-            console.log('first slash found: ' + url.charAt(i))
             secondSlash = true;
           }
           else if (url.charAt(i) == '/' && secondSlash && !thirdSlash) {
-            console.log('second slash found ' + url.charAt(i))
             thirdSlash = true;
           }
           else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fourthSlash) {
-            console.log('third slash found ' + url.charAt(i))
             fourthSlash = true;
           }
           else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fifthSlash) {
-            console.log('fourth slash found ' + url.charAt(i))
             fifthSlash = true;
           }
           else if (fifthSlash) {
-            console.log('adding to currProduct ' + url.charAt(i))
             currProduct += url.charAt(i)
           }
         }
@@ -564,11 +538,12 @@ app.post("/", express.json(), (req, res) => {
             break;
           }
         }
-        console.log(matched);
-        console.log(typeof matched);
         if (matched == '') {
-          agent.add("What is the product?");
-          updateMessages(false, "What is the product?");
+          agentResponse(["What is the product?",
+            "And what's the product?",
+            "For what product?",
+            "Alright, what item?",
+            "I can do that, what's the item?"])
         }
       }
       if (matched != '') {
@@ -576,8 +551,11 @@ app.post("/", express.json(), (req, res) => {
           for (let i = 0; i < amount; i++)
             await increase(matched.id);
           await fetchCartItems()
-          agent.add('added to cart!')
-          updateMessages(false, 'added to cart!')
+          agentResponse(["Added to cart!",
+            "Yay! We added " + amount + " of those to your cart!",
+            "Cool, you now have it in your cart now!",
+            "Successfully added that to your cart!",
+            "We've added " + amount + " of those to your cart!"])
         }
         if (addOrDelete == 'Delete') {
           await fetchCartItems();
@@ -589,14 +567,18 @@ app.post("/", express.json(), (req, res) => {
             }
           }
           if (numInCart < amount) {
-            agent.add("You do not have " + amount + " of " + matched.name + " in your cart to delete!");
-            updateMessages(false, "You do not have " + amount + " of " + matched.name + " in your cart to delete!")
+            agentResponse(["You do not have " + amount + " of " + matched.name + " in your cart to delete!",
+              "Wait - you're asking to remove " + amount + " of " + matched.name + " from your cart. You only have " + numInCart + " in your cart!",
+              "There's not enough of " + matched.name + " in your cart to delete " + amount + " of them!",
+              "You only have " + numInCart + " of " + matched.name + " in your cart."])
           } else {
             for (let i = 0; i < amount; i++)
             await decrease(matched.id);
             await fetchCartItems()
-            agent.add('deleted from cart')
-            updateMessages(false, 'deleted from cart')
+            agentResponse(["Deleted from cart.",
+              "Okay, deleted " + amount + " from cart.",
+              "We've deleted it.",
+              "Deleted " + amount + " " + matched.name + " from cart."])
           }
         }
       }
@@ -624,9 +606,12 @@ app.post("/", express.json(), (req, res) => {
     
       messageId++;
       let response = await fetch(ENDPOINT_URL + '/application/messages', requestOptions);
-    
-      agent.add("Messages cleared!")
-
+      agentResponse(["Messages cleared!",
+        "Okay, cleared your messages",
+        "Your messages have been cleared.",
+        "Starting fresh. Getting rid of messages...",
+        "Okay, we'll delete those.",
+        "All cleared!"])
     }
 
   }
@@ -642,8 +627,13 @@ app.post("/", express.json(), (req, res) => {
         "Quick log in first!"])
     } else {
       await clearCart();
-      agent.add('Cart cleared')
-      updateMessages(false, 'Cart cleared')
+      agentResponse(["Cart cleared!",
+        "Okay, cleared your cart",
+        "Your cart is now empty.",
+        "Okay, we'll start your cart out fresh",
+        "Okay, we'lll delete everything from your cart.",
+        "Emptying your cart...",
+        "Cleared!"])
     }
   }
 
@@ -652,8 +642,11 @@ app.post("/", express.json(), (req, res) => {
       updateMessages(true, agent.query)
     }
     if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, "You must log in first!")
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } else {    
       changePage('cart');
       await fetchCartItems()
@@ -664,11 +657,16 @@ app.post("/", express.json(), (req, res) => {
           num += 1
           list += item.count + " " + item.name + '. ';
         }
-        agent.add(list)
-        updateMessages(false, list)
+        agentResponse(['These are the items in your cart: ' + list,
+          "Okay, here's what's in your cart: " + list,
+          list,
+          "Your cart: " + list]);
       } else {
-        agent.add("There are no items in your cart.")
-        updateMessages(false, "There are no items in your cart.")
+        agentResponse(['There are no items in your cart.',
+          'No items in cart',
+          'Your cart is empty',
+          'Your cart is currently empty',
+          "There's nothing in yor cart!"])
       }
     }
   }
@@ -697,11 +695,16 @@ app.post("/", express.json(), (req, res) => {
         if (cartItems.length == 1) {
           plural = "item"
         }
-        agent.add("Confirm purchase of " + cartItems.length + " " + plural + ". " + list + "Would you like to confirm your purchase?")
-        updateMessages(false, "Confirm purchase of " + cartItems.length + " " + plural + ". " + list + "Would you like to confirm your purchase?")
+        agentResponse("Confirm purchase of " + cartItems.length + " " + plural + ". " + list,
+          "Checking out for " + cartItems.length + " " + plural + ": " + list,
+          "Please confirm you would like to buy these items: " + list,
+          "Your purchase will be the following. " + list + " Proceed?") 
       } else {
-        agent.add("There are no items in your cart.")
-        updateMessages(false, "There are no items in your cart.")
+        agentResponse(['There are no items in your cart.',
+          'No items in cart',
+          'Your cart is empty',
+          'Your cart is currently empty',
+          "There's nothing in yor cart!"])
       }
     }
   }
@@ -710,8 +713,11 @@ app.post("/", express.json(), (req, res) => {
     if (agent.query != '') {
       updateMessages(true, agent.query);
     }
-    agent.add('Okay.')
-    updateMessages(false, 'Okay.')
+    agentResponse(["Okay, that will not be purchased.",
+      "Got it. What would you like to see now?",
+      "Okay, going back to main cart page.",
+      "No problem, we won't order that purchase."])
+    changePage('cart');
   }
 
 
@@ -719,15 +725,27 @@ app.post("/", express.json(), (req, res) => {
     if (agent.query != '') {
       updateMessages(true, agent.query);
     }
-
-    if (currPage != '/' + username + "/" + 'cart-review') {
-      agent.add('Review your purchase before confirming.')
-      updateMessages(false, 'Review your purchase before confirming.')
-      await reviewCart();
+    if (token == '') {
+      agentResponse(["You must log in first!", 
+      "Hold on - please log in!", 
+      "I don't know who you are yet! Please log in!", 
+      "Wait - you forgot to log in",
+      "Quick log in first!"])
     } else {
-      changePage('cart-confirmed')
-      agent.add("Purchase confirmed!")
-      updateMessages(false, 'Purchase confirmed!')
+      if (currPage != '/' + username + "/" + 'cart-review') {
+        agentResponse(["Review your purchase first before confirming your order.",
+          "Please check your cart before confirming your purchase",
+          "Wait! Please review your cart first.",])
+        await reviewCart();
+      } else {
+        changePage('cart-confirmed')
+        agentResponse(["Purchase confirmed!",
+          "Your purchase is completed.",
+          "You've bought those items.",
+          "Order confirmed.",
+          "Great, that's ordered for you.",
+          "Awesome, I've completed that purchase for you."])
+      }
     }
   }
 
@@ -744,8 +762,10 @@ app.post("/", express.json(), (req, res) => {
         "Quick log in first!"])
     } 
     else if (agent.parameters.page == '') {
-      agent.add("What page would you like to go to?")
-      updateMessages(false, "What page would you like to go to?")
+      agentResponse(["What page would you like to go to?",
+        "Where would you like to go?",
+        "Okay, what page do you want to go to?",
+        "And what page is that?"])
     } 
     else {
       let page = agent.parameters.page.toLowerCase();
@@ -757,14 +777,74 @@ app.post("/", express.json(), (req, res) => {
         agent.add("Going back...");
         updateMessages(false, "Going back...")
       } else {
-        await changePage(page);
-        if (page == '') {
-          agent.add("Taking you home...")
-          updateMessages(false, "Taking you home...")
+        let foundPage = false
+        let isCategory = false;
+        if (page != '') {
+          // check if it is a valid category
+          await fetchCategories();
+          for (const cat of cat_arr) {
+            if (cat == page) {
+              await changePage(page);
+              foundPage = true;
+              isCategory = true;
+              break;
+            }
+          }
+
+          // check if it is a product that has been misclassified
+          await fetchProducts();
+          for (const product of products) {
+            if (product.name.toLowerCase() == page) {
+              matched = product;
+              await changePage(matched.category + '/products/' + matched.id);
+              foundPage = true
+              break;
+            }
+          }
+        }
+        if (foundPage) {
+          if (isCategory) {
+            let sentence = ''
+            let categoryList = []
+            for (const product of products) {
+              if (product.category == page) {
+                categoryList.push(product)
+              }
+            }
+            for (let i = 0; i < categoryList.length; i++) {
+              if (i == categoryList.length - 1) {
+                if (categoryList.length == 1) {
+                  sentence += ' the ' + categoryList[i].name + "."
+                } else
+                  sentence += ' and the ' + categoryList[i].name + ".";
+              } else
+                sentence += ' the ' + categoryList[i].name + ', ';
+            }
+            agentResponse(['Here are the ' + page + ': ' + sentence,
+              'Okay, these are the ' + page + ' I found: ' + sentence,
+              'Got it. The ' + page + ' are ' + sentence])
+          } else {
+            agentResponse(["Here is the " + page,
+              "Now showing you the " + page,
+              "Now on the " + page + ' page',
+              "Here you go. Showing you the " + page])
+          }
+        }
+        else if (!foundPage && page != '') { // there is not a valid page with the requested thing
+          agentResponse(["Sorry, I don't have a page for " + page + ". I can take you to any category (hats, bottoms, leggings, plushes, sweatshirts, or tees), any product, to your cart, or home",
+            "Couldn't find a page for " + page + ". I can take you to category pages hats, bottoms, leggings, plushes, sweatshirts, tees,  any product page, to your cart, or home.",
+            "I don't think I understood that. I can navigate you to hats, bottoms, leggings, plushes, sweatshirts, tees, a product page, your cart, or home."])
+        }
+        else if (page == '') {
+          await changePage(page);
+          agentResponse(["On home page. There are hats, bottoms, leggings, plushes, sweatshirts, and tees. Or I can take you to your cart.",
+            "You're on the home page now. Would you like to see hats, bottoms, leggings plushes, sweatpants, or tees? Or would you like to view your cart.",
+            "No problem, you're on the home page now. Where can I navigate you to next? I can show you hats, bottoms, leggings, plushes, sweatshirts, and tees, or I can show you your cart."])
         }
         else {
-          agent.add("Here you go!")
-          updateMessages(false, "Here you go!")
+          agentResponse(["This wasn't supposed to happen. Maybe try another phrase."],
+            "Huh, this is weird. Try saying something else.",
+            "Okay, that's strange. Try that again.")
         }
       }
     }
@@ -783,8 +863,10 @@ app.post("/", express.json(), (req, res) => {
     } else {
       let name = agent.parameters.item;
       if (name == '') {
-        agent.add('What item do you want to navigate to?')
-        updateMessages(false, 'What item do you want to navigate to?')
+        agentResponse(["What item do you want to navigate to?",
+          "What product is that?",
+          "And what's the item?",
+          "Okay, what product do you want to see?"])
       } else {
         let matched = '';
         await fetchProducts();
@@ -798,25 +880,46 @@ app.post("/", express.json(), (req, res) => {
         if (matched != '') {
           let page = matched.category + '/products/' + matched.id;
           await changePage(page);
-          agent.add("Here is the " + matched.name);
-          updateMessages(false, "Here is the " + matched.name)
+          agentResponse(["Here is the " + matched.name,
+            "Now looking at the " + matched.name,
+            "Here's that product",
+            "Now viewing the " + matched.name])
         } else {
           await fetchCategories();
-          let sentence = ''
+          let foundPage = false
           for (const cat of cat_arr) {
             if (cat == name) {
               await changePage(name);
-              sentence = 'Changing pages!';
+              foundPage = true;
               break;
             }
           }
-          if (sentence == '') {
-            agent.add("We couldn't find a product named " + name);
-            updateMessages(false, "We couldn't find a page named " + name)
+          if (!foundPage) {
+            agentResponse(["We couldn't find a product named " + name,
+              "Sorry, I couldn't find anything that matched the name " + name, 
+              "No products I found were named " + name,
+              "Hm, I couldn't find something under the name " + name])
           }
           else {
-            agent.add(sentence);
-            updateMessages(false, sentence);
+            let sentence = ''
+            let categoryList = []
+            for (const product of products) {
+              if (product.category == name) {
+                categoryList.push(product)
+              }
+            }
+            for (let i = 0; i < categoryList.length; i++) {
+              if (i == categoryList.length - 1) {
+                if (categoryList.length == 1) {
+                  sentence += ' the ' + categoryList[i].name + "."
+                } else
+                  sentence += ' and the ' + categoryList[i].name + ".";
+              } else
+                sentence += ' the ' + categoryList[i].name + ', ';
+            }
+            agentResponse(['Here are the ' + name + ': ' + sentence,
+              'Okay, these are the ' + name + ' I found: ' + sentence,
+              'Got it. The ' + name + ' are ' + sentence])
           }
         }
 
@@ -838,35 +941,26 @@ app.post("/", express.json(), (req, res) => {
     } else {
       await fetchCategories();
 
-      console.log(agent.parameters.pages)
       let category = ''
       let currCategory = '';
 
       if (agent.parameters.pages == '') {
         let url = await getApplicationUrl();
-        console.log(url)
-        console.log(url.length)
 
         let secondSlash = false;
         let thirdSlash = false;
         for (var i = 0; i < url.length; i++) {
-          console.log('hello in')
           if (url.charAt(i) == '/' && !secondSlash && !thirdSlash) {
-            console.log('first slash found: ' + url.charAt(i))
             secondSlash = true;
           }
           else if (url.charAt(i) == '/' && secondSlash && !thirdSlash) {
-            console.log('second slash found ' + url.charAt(i))
             thirdSlash = true;
           }
           else if (thirdSlash) {
-            console.log('adding to currCategory ' + url.charAt(i))
             currCategory += url.charAt(i)
           }
         }
-        console.log('currCategory: ' + currCategory)
         category = ''
-        console.log(categories)
         for (const thisCategory of cat_arr) {
           if (thisCategory == currCategory) {
             category = currCategory
@@ -910,9 +1004,7 @@ app.post("/", express.json(), (req, res) => {
             }
           }
     
-          console.log(typeof category)
           let singular = category.slice(0, -1)
-          console.log(singular)
       
           if (numOfCategory == 0) {
             agent.add("We're confused. Category " + category)
@@ -967,7 +1059,6 @@ app.post("/", express.json(), (req, res) => {
               } else
                 sentence += ' the ' + categoryList[i].name + ', ';
             }
-            console.log(sentence)
             agent.add(sentence)
             updateMessages(false, sentence)
           }
