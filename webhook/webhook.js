@@ -588,11 +588,11 @@ app.post("/", express.json(), (req, res) => {
 
   async function clearMessages() {
     if (token == '') {
-      agentResponse("You must log in first!", 
+      agentResponse(["You must log in first!", 
       "Hold on - please log in!", 
       "I don't know who you are yet! Please log in!", 
       "Wait - you forgot to log in",
-      "Quick log in first!")
+      "Quick log in first!"])
     }
     else {
       let requestOptions = {
@@ -695,10 +695,10 @@ app.post("/", express.json(), (req, res) => {
         if (cartItems.length == 1) {
           plural = "item"
         }
-        agentResponse("Confirm purchase of " + cartItems.length + " " + plural + ". " + list,
+        agentResponse(["Confirm purchase of " + cartItems.length + " " + plural + ". " + list,
           "Checking out for " + cartItems.length + " " + plural + ": " + list,
           "Please confirm you would like to buy these items: " + list,
-          "Your purchase will be the following. " + list + " Proceed?") 
+          "Your purchase will be the following. " + list + " Proceed?"]) 
       } else {
         agentResponse(['There are no items in your cart.',
           'No items in cart',
@@ -774,8 +774,10 @@ app.post("/", express.json(), (req, res) => {
       }
       if (page == 'back') {
         await goBack();
-        agent.add("Going back...");
-        updateMessages(false, "Going back...")
+        agentResponse(["Going back...",
+          "Okay, taking you to the last page",
+          "Here's the last page you were on",
+          "Navigating you back"])
       } else {
         let foundPage = false
         let isCategory = false;
@@ -967,8 +969,9 @@ app.post("/", express.json(), (req, res) => {
           }
         }
         if (category == '') {
-          agent.add("That is not a category.")
-          updateMessages(false, "That is not a category.")
+          agentResponse(["Couldn't find a category",
+            "The page you're on is not a category",
+            "No category items to look at on this page"])
         }
       } else {
         category = agent.parameters.pages.toLowerCase();
@@ -978,8 +981,9 @@ app.post("/", express.json(), (req, res) => {
           }
         }
         if (category == '') {
-          agent.add("That is not a category.");
-          updateMessages(false, "That is not a category.")
+          agentResponse(["Couldn't find a category named " + category + ". You can choose from hats, bottoms, tees, plushes, sweatshirts, and leggings",
+            "No category named " + category + ". The categories are hats, bottoms, tees, plushes, sweatshirts, and leggings",
+            "Sorry, I couldn't find a category named " + category + ". Try searching for hats, bottoms, tees, plushes, sweatshirts, or leggings"])
         }
       } if (category != '') {
         let inquiry = agent.parameters.inquiry;
@@ -1007,17 +1011,19 @@ app.post("/", express.json(), (req, res) => {
           let singular = category.slice(0, -1)
       
           if (numOfCategory == 0) {
-            agent.add("We're confused. Category " + category)
-            updateMessages(false,"We're confused. Category " + category )
+            agentResponse(["We're confused. Category " + category])
           }
           else {
             await changePage(category);
             if (numOfCategory > 1) {
-              agent.add("There are " + numOfCategory + " " + category);
-              updateMessages(false, "There are " + numOfCategory + " " + category)
-            } if (numOfCategory == 1) {
-              agent.add("There is 1 " + singular);
-              updateMessages(false, "There is 1 " + singular)
+              agentResponse(["There are " + numOfCategory + " " + category,
+                "I found " + numOfCategory + " " + category,
+                "Seems like there's " + numOfCategory + " " + category])
+            } 
+            if (numOfCategory == 1) {
+              agentResponse(["There is 1 " + singular,
+                "Found one " + singular,
+                "I was able to find 1 " + singular])
             }
           }
         }
@@ -1044,12 +1050,11 @@ app.post("/", express.json(), (req, res) => {
           }
   
           if (numOfCategory == 0) {
-            agent.add("We're confused");
-            updateMessages(false, "We're confused")
+            agentResponse(["I'm confused"]);
           }
           else {
             await changePage(category);
-            let sentence = 'Products on page ' + category + ' include'
+            let sentence = ''
             for (let i = 0; i < categoryList.length; i++) {
               if (i == categoryList.length - 1) {
                 if (categoryList.length == 1) {
@@ -1059,8 +1064,9 @@ app.post("/", express.json(), (req, res) => {
               } else
                 sentence += ' the ' + categoryList[i].name + ', ';
             }
-            agent.add(sentence)
-            updateMessages(false, sentence)
+            agentResponse(['Here are the ' + page + ': ' + sentence,
+              'Okay, these are the ' + page + ' I found: ' + sentence,
+              'Got it. The ' + page + ' are ' + sentence])
           }
   
         }
@@ -1081,10 +1087,14 @@ app.post("/", express.json(), (req, res) => {
     }
 
     if (cartItems.length == 0) {
-      agent.add("The price of your cart is 0");
+      agentResponse(["The price of your cart is 0",
+        "Your cart is empty, so the current price is 0",
+        "Total cost of 0 dollars"])
     }
     else {
-      agent.add("The price of your cat is " + totalPrice + ' dollars')
+      agentResponse(["The price of your cat is " + totalPrice + ' dollars',
+        "Total price: " + totalPrice + " dollars",
+        totalPrice + " dollars is the total amount in your cart"])
     }
   }
 
