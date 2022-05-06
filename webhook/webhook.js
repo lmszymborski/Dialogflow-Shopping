@@ -259,8 +259,24 @@ app.post("/", express.json(), (req, res) => {
 
     await getToken();
 
-    agent.add("You've been logged in! Would you like to see bottoms, hats, leggings, plushes, sweatshirts, tees, or review your cart?");
-    updateMessages(false, "You've been logged in! Would you like to see bottoms, hats, leggings, plushes, sweatshirts, tees, or review your cart?");
+    if (token) {
+      console.log(token)
+      let message1 = "You've been logged in! Would you like to see bottoms, hats, leggings, plushes, sweatshirts, tees, or review your cart?"
+      let message2 = "Where would you like to go? See bottoms, hats, leggings, plushes, sweatshirts, tees, or see your cart?"
+      let message3 = "You're home! Where to next? Bottoms, hats, leggings, plushes, sweatshirts, or tees? Or do you want to view your cart?"
+      let message4 = "Okay, I know who you are. Where do you wanna go from here? There's bottoms, hats, leggings, plushes, sweatshirts, and tees, or you can also view your cart."
+      
+      agentResponse([message1, message2, message3, message4])
+    }
+
+    else {
+      agentResponse(["That wasn't correct. Please login again.",
+        "I think either I got some of that wrong, or you got some of that wrong. Please try again.",
+        "Hm, that wasn't correct. Try logging in again.",
+        "I didn't find an account with those credentials!"])
+    }
+
+
   }
 
   async function categories() {
@@ -316,7 +332,6 @@ app.post("/", express.json(), (req, res) => {
         strCount + ' ' + plural])
     }
 
-   // agent.add("There are " + String(Object.keys(products).length) + " items in your cart.")
   }
 
   async function productInfo() {
@@ -331,122 +346,149 @@ app.post("/", express.json(), (req, res) => {
         "Wait - you forgot to log in",
         "Quick log in first!"])
     }
-    await fetchProducts()
+    else {
+      await fetchProducts()
 
-    let name = agent.parameters.name
-    let matched = ''
+      let name = agent.parameters.name
+      let matched = ''
 
-    if (name == '') {
-      let url = await getApplicationUrl();
-      console.log(await getApplicationUrl());
-      console.log(url)
-      console.log(url.length)
-      let secondSlash = false;
-      let thirdSlash = false;
-      let fourthSlash = false;
-      let fifthSlash = false;
-      let currProduct = ''
-      for (var i = 0; i < url.length; i++) {
-        console.log('hello in')
-        if (url.charAt(i) == '/' && !secondSlash && !thirdSlash) {
-          console.log('first slash found: ' + url.charAt(i))
-          secondSlash = true;
-        }
-        else if (url.charAt(i) == '/' && secondSlash && !thirdSlash) {
-          console.log('second slash found ' + url.charAt(i))
-          thirdSlash = true;
-        }
-        else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fourthSlash) {
-          console.log('third slash found ' + url.charAt(i))
-          fourthSlash = true;
-        }
-        else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fifthSlash) {
-          console.log('fourth slash found ' + url.charAt(i))
-          fifthSlash = true;
-        }
-        else if (fifthSlash) {
-          console.log('adding to currProduct ' + url.charAt(i))
-          currProduct += url.charAt(i)
-        }
-      }
-
-      let id = currProduct;
-
-      for (const product of products) {
-        if (product.id == id) {
-          matched = product;
-          break;
-        }
-      }
-      console.log(matched);
-      console.log(typeof matched);
-      if (matched == '') {
-        agent.add("What is the product?");
-        updateMessages(false, "What is the product?");
-      }
-    } else {
-      for (const product of products) {
-        if (product.name == name) {
-          matched = product;
-          break;
-        }
-      }
-    } if (agent.parameters.question == '') {
-      agent.add("Do you want to know the price, description, reviews, or rating?")
-      updateMessages(false, "Do you want to know the price, description, reviews, or rating?")
-    } if (agent.parameters.name != '' || matched != '') {
-      console.log(matched != '')
-      console.log(matched);
-      let question = agent.parameters.question
-
-      if (question == 'Price') {
-        agent.add(String(matched.price) + ' dollars.')
-        updateMessages(false, String(matched.price) + ' dollars.')
-      }
-  
-      if (question == 'Description') {
-        agent.add(matched.description)
-        updateMessages(false, matched.description)
-      }
-  
-      if (question == 'Reviews') {
-        await fetchReviews(matched.id);
-        let list = ''
-        let num = 0
-        if (reviewsList.length > 0) {
-          for (const review of reviewsList) {
-            num += 1
-            list += 'Review ' + num + ': ' + review.stars + '/5. ' + review.title + '. ' + review.text + ' ';
+      if (name == '') {
+        let url = await getApplicationUrl();
+        console.log(await getApplicationUrl());
+        console.log(url)
+        console.log(url.length)
+        let secondSlash = false;
+        let thirdSlash = false;
+        let fourthSlash = false;
+        let fifthSlash = false;
+        let currProduct = ''
+        for (var i = 0; i < url.length; i++) {
+          console.log('hello in')
+          if (url.charAt(i) == '/' && !secondSlash && !thirdSlash) {
+            console.log('first slash found: ' + url.charAt(i))
+            secondSlash = true;
           }
-          agent.add(list)
-          updateMessages(false, list)
-
-        } else {
-          agent.add("There are no reviews.")
-          updateMessages(false, "There are no reviews.")
-        }
-      }
-  
-      if (question == "Rating") {
-        await fetchReviews(matched.id);
-        if (reviewsList.length > 0) {
-        let overall = 0;
-        if (reviewsList.length > 0) {
-          for (const review of reviewsList) {
-            overall += review.stars;
+          else if (url.charAt(i) == '/' && secondSlash && !thirdSlash) {
+            console.log('second slash found ' + url.charAt(i))
+            thirdSlash = true;
+          }
+          else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fourthSlash) {
+            console.log('third slash found ' + url.charAt(i))
+            fourthSlash = true;
+          }
+          else if (url.charAt(i) == '/' && secondSlash && thirdSlash && !fifthSlash) {
+            console.log('fourth slash found ' + url.charAt(i))
+            fifthSlash = true;
+          }
+          else if (fifthSlash) {
+            console.log('adding to currProduct ' + url.charAt(i))
+            currProduct += url.charAt(i)
           }
         }
-        overall = overall / reviewsList.length;
-        agent.add("The overall rating is " + overall + "/5");
-        updateMessages(false, "The overall rating is " + overall + "/5")
+  
+        let id = currProduct;
+  
+        for (const product of products) {
+          if (product.id == id) {
+            matched = product;
+            break;
+          }
+        }
+        console.log(matched);
+        console.log(typeof matched);
+        if (matched == '' && agent.parameters.question != '') {
+          agentResponse(["What is the product?", 
+            "And what product do you want that info for?",
+            "Okay - what item though?",
+            "I don't know the product yet!",
+            "Got it - but what item?"])
+        }
       } else {
-        agent.add("There are no ratings.");
-        updateMessages(false, "There are no ratings.")
+        for (const product of products) {
+          if (product.name == name) {
+            matched = product;
+            break;
+          }
+        }
+      } if (agent.parameters.question == '' && matched == '') {
+        agentResponse(["What product and what do you want to know?",
+          "Okay, so you want product info - what product and do you want the price, description, reviews, or rating?",
+          "Can you give me a bit more info? What's the name and what do you want to know about it?"]);
       }
-
+      else if (agent.parameters.question == '' && matched != '') {
+        console.log(matched);
+        agentResponse(["Do you want to know the price, description, reviews, or rating?",
+          "What do you want to know about it? I know price, description, reviews, and rating.",
+          "Okay, do you want to know the price, reviews, rating, or description of the " + matched.name,
+          "I know the price, reviews, rating, and description for the " + matched.name])
+      } else if (agent.parameters.name != '' || matched != '') {
+        console.log(matched != '')
+        console.log(matched);
+        let question = agent.parameters.question.toLowerCase()
+  
+        if (question == 'price') {
+          let strPrice = String(matched.price) + ' dollars'
+          agentResponse([strPrice,
+            "That's " + strPrice,
+            "Price for that is " + strPrice,
+            strPrice + " for the " + matched.name])
+        }
+    
+        else if (question == 'description') {
+          agentResponse([matched.description,
+            "Here's the description: " + matched.description])
+        }
+        else if (question == 'reviews') {
+          await fetchReviews(matched.id);
+          let list = ''
+          let num = 0
+          if (reviewsList.length > 0) {
+            for (const review of reviewsList) {
+              num += 1
+              list += 'Review ' + num + ': ' + review.stars + '/5. ' + review.title + '. ' + review.text + ' ';
+            }
+            agentResponse([list])
+          } else {
+            agentResponse(["There are no reviews", 
+              "Sorry, no reviews for that item",
+              "No reviews for item " + matched.name + ", sorry",
+              "No reviews yet",
+              "Oops! Looks like there aren't any reviews yet."])
+          }
+        }
+        else if (question == "rating") {
+          await fetchReviews(matched.id);
+          if (reviewsList.length > 0) {
+          let overall = 0;
+          if (reviewsList.length > 0) {
+            for (const review of reviewsList) {
+              overall += review.stars;
+            }
+          }
+          overall = overall / reviewsList.length;
+          overall = Math.round(overall * 10) / 10
+          agentResponse(["The overall rating is " + overall + "/5",
+            "Average rating is " + overall + "/5",
+            "Okay - the rating is " + "/5",
+            overall + "/5"])
+        } else {
+          agentResponse(["There are no ratings", 
+          "Sorry, no ratngs for that item",
+          "No ratings for item " + matched.name + ", sorry",
+          "No ratings yet",
+          "Oops! Looks like there aren't any ratings yet."])
+        }
+  
+        }
+  
+        else {
+          agentResponse(["Hm, I see you want to know " + question + ", but that's not something I have the details on. I do know the reviews, rating, price, or description",
+          question + " isn't something I have info for. Can you rephase? I know reviews, rating, price, and description"],
+          "I didn't quite get that. Did you mean the reviews, rating, price, or description?",
+          "You asked for the " + question + "? I don't have that, but I do have information on the reviews, rating, price, and description.")
+        }
       }
     }
-
   }
 
   async function addToCart() {
@@ -756,8 +798,8 @@ app.post("/", express.json(), (req, res) => {
         if (matched != '') {
           let page = matched.category + '/products/' + matched.id;
           await changePage(page);
-          agent.add("Here are the " + matched.name);
-          updateMessages(false, "Here are the " + matched.name)
+          agent.add("Here is the " + matched.name);
+          updateMessages(false, "Here is the " + matched.name)
         } else {
           await fetchCategories();
           let sentence = ''
