@@ -245,6 +245,12 @@ app.post("/", express.json(), (req, res) => {
     updateMessages(false, "Webhook works!");
   }
 
+  async function agentResponse(messages) {
+    let message = messages[Math.floor(Math.random()*messages.length)]
+    agent.add(message);
+    updateMessages(false, message);
+  }
+
   async function login() {
     // You need to set this as the value of the `username` parameter that you defined in Dialogflow
     username = agent.parameters.username;
@@ -263,15 +269,19 @@ app.post("/", express.json(), (req, res) => {
     }
 
     await fetchCategories()
-    let sentence = 'You can buy '
+    let sentence = ''
     for (let i = 0; i < cat_arr.length; i++) {
       if (i != cat_arr.length - 1)
         sentence += cat_arr[i] + ', '
       else
         sentence += 'and ' + cat_arr[i] + '.'
     }
-    agent.add(sentence)
-    updateMessages(false, sentence)
+    await agentResponse(['You can buy ' + sentence, 
+      'There are the categories: ' + sentence, 
+      'This is all of them! ' + sentence, 
+      sentence,
+      sentence + " - that's all of em!",
+      "We have tons here - " + sentence])
   }
 
   async function countCartItems() {
@@ -280,8 +290,11 @@ app.post("/", express.json(), (req, res) => {
     }
 
     if (token == '') {
-      agent.add('You must log in first!');
-      updateMessages(false, 'You must log in first!');
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } else {
       await fetchCartItems()
       let count = 0
@@ -289,8 +302,18 @@ app.post("/", express.json(), (req, res) => {
       for(const product of cartItems) {
         count += product.count
       }
-      agent.add(String(count))
-      updateMessages(false, String(count));
+      let plural = 'items'
+      if (count == 1) {
+        plural = 'item';
+      }
+
+      let strCount = String(count)
+
+      await agentResponse([strCount, 
+        "You have " + strCount + ' items',
+        strCount + " " + plural + " in cart",
+        "There's " + strCount + " " + plural + " in there",
+        strCount + ' ' + plural])
     }
 
    // agent.add("There are " + String(Object.keys(products).length) + " items in your cart.")
@@ -302,8 +325,11 @@ app.post("/", express.json(), (req, res) => {
     }
 
     if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, 'You must log in first!');
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     }
     await fetchProducts()
 
@@ -428,8 +454,11 @@ app.post("/", express.json(), (req, res) => {
       updateMessages(true, agent.query);
     }
     if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, 'You must log in first!')
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } else {
       await fetchProducts()
 
@@ -535,8 +564,11 @@ app.post("/", express.json(), (req, res) => {
 
   async function clearMessages() {
     if (token == '') {
-      agent.add("You must log in first!");
-      updateMessages(false, 'You must log in first!');
+      agentResponse("You must log in first!", 
+      "Hold on - please log in!", 
+      "I don't know who you are yet! Please log in!", 
+      "Wait - you forgot to log in",
+      "Quick log in first!")
     }
     else {
       let requestOptions = {
@@ -561,8 +593,11 @@ app.post("/", express.json(), (req, res) => {
     if (agent.query != '') {
       updateMessages(true, agent.query)
     } if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, "You must log in first!")
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } else {
       await clearCart();
       agent.add('Cart cleared')
@@ -601,8 +636,11 @@ app.post("/", express.json(), (req, res) => {
       updateMessages(true, agent.query)
     }
     if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, "You must log in first!")
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } else {    
       changePage('cart-review');
       await fetchCartItems()
@@ -657,8 +695,11 @@ app.post("/", express.json(), (req, res) => {
     }
 
     if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, "You must log in first!")
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } 
     else if (agent.parameters.page == '') {
       agent.add("What page would you like to go to?")
@@ -692,8 +733,11 @@ app.post("/", express.json(), (req, res) => {
       updateMessages(true, agent.query);
     }
     if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, "You must log in first!")
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } else {
       let name = agent.parameters.item;
       if (name == '') {
@@ -708,14 +752,30 @@ app.post("/", express.json(), (req, res) => {
             break;
           }
         }
+
         if (matched != '') {
           let page = matched.category + '/products/' + matched.id;
           await changePage(page);
           agent.add("Here are the " + matched.name);
           updateMessages(false, "Here are the " + matched.name)
         } else {
-          agent.add("We couldn't find a page named " + name);
-          updateMessages(false, "We couldn't find a page named " + name)
+          await fetchCategories();
+          let sentence = ''
+          for (const cat of cat_arr) {
+            if (cat == name) {
+              await changePage(name);
+              sentence = 'Changing pages!';
+              break;
+            }
+          }
+          if (sentence == '') {
+            agent.add("We couldn't find a product named " + name);
+            updateMessages(false, "We couldn't find a page named " + name)
+          }
+          else {
+            agent.add(sentence);
+            updateMessages(false, sentence);
+          }
         }
 
       }
@@ -728,8 +788,11 @@ app.post("/", express.json(), (req, res) => {
       updateMessages(true, agent.query)
     }
     if (token == '') {
-      agent.add("You must log in first!")
-      updateMessages(false, "You must log in first!")
+      agentResponse(["You must log in first!", 
+        "Hold on - please log in!", 
+        "I don't know who you are yet! Please log in!", 
+        "Wait - you forgot to log in",
+        "Quick log in first!"])
     } else {
       await fetchCategories();
 
