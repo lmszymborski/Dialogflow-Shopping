@@ -348,6 +348,7 @@ app.post("/", express.json(), (req, res) => {
 
       if (name == '') {
         let url = await getApplicationUrl();
+        console.log(url)
         let secondSlash = false;
         let thirdSlash = false;
         let fourthSlash = false;
@@ -468,6 +469,10 @@ app.post("/", express.json(), (req, res) => {
           "I didn't quite get that. Did you mean the reviews, rating, price, or description?",
           "You asked for the " + question + "? I don't have that, but I do have information on the reviews, rating, price, and description.")
         }
+      } else {
+        agentResponse(["I don't see an item named " + name,
+          "Sorry, couldn't find the item " + name + ". Try again?",
+          "Oops, seems I couldn't find the " + name])
       }
     }
   }
@@ -490,13 +495,9 @@ app.post("/", express.json(), (req, res) => {
       let amount = agent.parameters.number;
 
       let matched = ''
+      let id = ''
   
-      for (const product of products) {
-        if (product.name == name) {
-          matched = product;
-          break;
-        }
-      }
+
 
       if (addOrDelete == '') {
         agentResponse(["Would you like to add or delete that item?",
@@ -505,7 +506,7 @@ app.post("/", express.json(), (req, res) => {
           "Are we adding it or getting rid of it?"])
       }
 
-      if (agent.parameters.name == '') {
+      if (!agent.parameters.name) {
         let url = await getApplicationUrl();
         let secondSlash = false;
         let thirdSlash = false;
@@ -530,7 +531,7 @@ app.post("/", express.json(), (req, res) => {
           }
         }
   
-        let id = currProduct;
+        id = currProduct;
   
         for (const product of products) {
           if (product.id == id) {
@@ -538,18 +539,31 @@ app.post("/", express.json(), (req, res) => {
             break;
           }
         }
+        
         if (matched == '') {
-          agentResponse(["What is the product?",
+          agentResponse(["Can you ask that again and include the product name?",
             "And what's the product?",
             "For what product?",
             "Alright, what item?",
             "I can do that, what's the item?"])
         }
+      } else {
+        for (const product of products) {
+          if (product.name == name) {
+            matched = product;
+            break;
+          }
+        }
       }
+
       if (matched != '') {
+        console.log('matched')
+        console.log(matched)
         if (addOrDelete == 'Add') {
-          for (let i = 0; i < amount; i++)
+          for (let i = 0; i < amount; i++) {
             await increase(matched.id);
+            console.log('added...')
+          }
           await fetchCartItems()
           agentResponse(["Added to cart!",
             "Yay! We added " + amount + " of those to your cart!",
@@ -581,6 +595,10 @@ app.post("/", express.json(), (req, res) => {
               "Deleted " + amount + " " + matched.name + " from cart."])
           }
         }
+      } else if (agent.parameters.name && matched == '') {
+        agentResponse(["Couldn't find an item named " + name,
+          "I couldn't find an item named " + name,
+          "Sorry, the name " + name + " isn't in the shop."])
       }
 
     }
@@ -631,7 +649,7 @@ app.post("/", express.json(), (req, res) => {
         "Okay, cleared your cart",
         "Your cart is now empty.",
         "Okay, we'll start your cart out fresh",
-        "Okay, we'lll delete everything from your cart.",
+        "Okay, we'll delete everything from your cart.",
         "Emptying your cart...",
         "Cleared!"])
     }
@@ -1064,9 +1082,9 @@ app.post("/", express.json(), (req, res) => {
               } else
                 sentence += ' the ' + categoryList[i].name + ', ';
             }
-            agentResponse(['Here are the ' + page + ': ' + sentence,
-              'Okay, these are the ' + page + ' I found: ' + sentence,
-              'Got it. The ' + page + ' are ' + sentence])
+            agentResponse(['Here are the ' + category + ': ' + sentence,
+              'Okay, these are the ' + category + ' I found: ' + sentence,
+              'Got it. The ' + category + ' are ' + sentence])
           }
   
         }
@@ -1078,12 +1096,15 @@ app.post("/", express.json(), (req, res) => {
   }
 
   async function cartCost() {
+    if (agent.query != '') {
+      updateMessages(true, agent.query);
+    }
     await fetchCartItems();
 
     let totalPrice = 0;
     
     for (const item of cartItems) {
-      totalPrice += item.price;
+      totalPrice += item.price * item.count;
     }
 
     if (cartItems.length == 0) {
@@ -1092,7 +1113,7 @@ app.post("/", express.json(), (req, res) => {
         "Total cost of 0 dollars"])
     }
     else {
-      agentResponse(["The price of your cat is " + totalPrice + ' dollars',
+      agentResponse(["The price of your cart is " + totalPrice + ' dollars',
         "Total price: " + totalPrice + " dollars",
         totalPrice + " dollars is the total amount in your cart"])
     }
